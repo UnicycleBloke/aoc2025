@@ -1,0 +1,62 @@
+import sys
+import requests
+from pathlib import Path
+
+
+# The cookie is found by inspecting the requests for Day 1 in the browser.
+# Firefox: Right-click > Inspect. 
+#          Network tab > Reload (to forced a GET)
+#          Look for the cookie called "session"
+# Place a file called cookie.txt in the build folder.
+AOC_COOKIE = "Read from cookie.txt"
+AOC_YEAR   = 2025       
+
+
+# Usage: python3 ../utils/fetch.py 4
+
+# The script should be run from the /build folder of the current year. 
+# Be sure to change AOC_YEAR to match. 
+# Be sure to update the value of AOC_COOKIE. 
+#
+# The folder structure is expected to be:
+#    /aocYYYY
+#        CMakeLists.txt
+#        /build           << Build and run everything from here
+#            cookie.txt   << Used by this script to authenticate    
+#        /day01
+#            input.txt    << The file fetched by this script
+#            test.txt     << Test input given in the problem
+#            solution.cpp
+#        /day02
+#        ...
+#        /day12
+#        /utils
+def main():
+    args = sys.argv[1:]
+    print(sys.argv)
+    if len(args) == 0:
+        raise "Provide a day number"
+
+    day        = int(args[0])
+    input_path = Path(sys.argv[0]).parent.parent / ("day%02d" % day) / "input.txt"    
+
+    # We don't want to spam the server. The input never changes for a given cookie.
+    if not input_path.exists():
+        AOC_COOKIE = open('cookie.txt').readlines()[0].strip()
+        year       = AOC_YEAR
+        input_url  = "https://adventofcode.com/%d/day/%d/input" % (year, day)
+
+        print("Fetching input data from:", input_url)
+        cookies = {"session": AOC_COOKIE}
+        content = requests.get(input_url, cookies=cookies).content
+
+        print("Saving input data to:", input_path)
+        input_file = open(input_path, 'wb')
+        input_file.write(content)
+
+    else:
+        print("Input file already exists:", input_path)
+
+
+if __name__ == "__main__":
+    main()

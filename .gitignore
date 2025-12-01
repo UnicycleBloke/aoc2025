@@ -39,3 +39,11 @@
 
 # debug information files
 *.dwo
+
+# AoC cookie for fetching input, and the input fetched
+cookie.txt
+input.txt
+test.txt
+
+# Build folder
+build
