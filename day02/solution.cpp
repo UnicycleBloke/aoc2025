@@ -1,21 +1,85 @@
 #include "utils.h"
 
 
+auto num_digits(uint64_t i)
+{
+    uint16_t n = 0;
+    while (i > 0)
+    {
+        ++n;
+        i = i / 10;
+    }
+    return n;
+};
+
+
 template <typename T>
-auto part1(const T& input)
+auto part1(const T& ranges)
 {
     aoc::timer timer;
-    int result = 0;
+    uint64_t result = 0;
+
+    for (auto [from, to]: ranges)
+    {
+        for (auto id: aoc::range(from, to + 1))
+        {
+            auto digits = num_digits(id);
+            if (digits % 2) continue;
+            digits = digits / 2;
+
+            uint64_t scale = 1;
+            for (uint16_t i = 0; i < digits; ++i)
+                scale *= 10; 
+                
+            uint64_t lower = id % scale;    
+            uint64_t upper = id / scale;
+            uint64_t id2   = lower * scale + upper;
+            if (id2 == id)
+                result += id;
+        }
+    }
 
     return result;
 }
 
 
 template <typename T>
-auto part2(T& input)
+auto part2(const T& ranges)
 {
     aoc::timer timer;
-    int result = 0;
+    uint64_t result = 0;
+
+    for (auto [from, to]: ranges)
+    {
+        for (auto id: aoc::range(from, to + 1))
+        {
+            auto digits = num_digits(id);
+            for (uint16_t digits2 = 1; digits2 <= digits / 2; ++digits2)
+            {
+                if (digits % digits2) continue;
+
+                uint64_t scale = 1;
+                for (uint16_t i = 0; i < digits2; ++i)
+                    scale *= 10;
+                    
+                uint64_t id2     = id;
+                uint64_t part    = id % scale;
+                bool     invalid = true;
+                while (id2 > 0)
+                {
+                    invalid &= ((id2 % scale) == part);
+                    id2 = id2 / scale;
+                }                      
+
+                if (invalid)
+                {
+                    result += id;
+                    // Avoid double counting
+                    break;
+                }
+            }
+        }
+    }
 
     return result;
 }
@@ -23,18 +87,30 @@ auto part2(T& input)
 
 void run(const char* filename)
 {
-    //template <class... Args>
-    //std::vector<std::tuple<Args...>> read_lines(std::string filename, std::string pat, const std::string& delim = ";")
-    auto lines = aoc::read_lines<int,int>(filename, R"((\d+)\s+(\d+))");
+    auto lines = aoc::read_lines(filename);
+    auto split = aoc::split(lines[0], ",");
 
-    // Read all lines from a file into a vector of strings. Trims lines by default and drops empty lines by default. Keeping 
-    // empty lines can be useful when the blank lines in the input are meaningful.
-    //std::vector<std::string> read_lines(std::string filename, Blanks allow_blanks = Blanks::Suppress, Trim trim_lines = Trim::Yes);
+    struct Range 
+    {
+        uint64_t from;
+        uint64_t to;
+    };
 
-    auto p1 = part1(lines);
+    vector<Range> ranges; 
+    for (auto s: split)
+    {
+        istringstream is{s};
+        Range r;
+        is >> r.from;
+        is.ignore();
+        is >> r.to;
+        ranges.push_back(r);
+    }
+
+    auto p1 = part1(ranges);
     cout << "Part1: " << p1 << '\n';
 
-    auto p2 = part2(lines);
+    auto p2 = part2(ranges);
     cout << "Part2: " << p2 << '\n';
 }
 
