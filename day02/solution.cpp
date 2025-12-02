@@ -54,6 +54,7 @@ auto part2(const T& ranges)
         for (auto id: aoc::range(from, to + 1))
         {
             auto digits = num_digits(id);
+            
             for (uint16_t digits2 = 1; digits2 <= digits / 2; ++digits2)
             {
                 if (digits % digits2) continue;
