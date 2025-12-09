@@ -5,7 +5,20 @@ template <typename T>
 auto part1(const T& input)
 {
     aoc::timer timer;
-    int result = 0;
+    int64_t result = 0;
+
+    // Simple scan of all possible pairs of points.
+    auto size = input.size();
+    for (auto i: aoc::range(size))
+    {
+        auto [xi, yi] = input[i];
+        for (auto j: aoc::range(i + 1, size))
+        {
+            auto [xj, yj] = input[j];
+            auto area = (abs(xj - xi) + 1) * (abs(yi - yj) + 1);
+            result = max(result, area);
+        }
+    }
 
     return result;
 }
@@ -15,7 +28,49 @@ template <typename T>
 auto part2(T& input)
 {
     aoc::timer timer;
-    int result = 0;
+    int64_t result = 0;
+
+    auto size = input.size();
+    for (auto i: aoc::range(size))
+    {
+        auto [xi, yi] = input[i];
+        for (auto j: aoc::range(i + 1, size))
+        {
+            auto [xj, yj] = input[j];
+
+            // This function is sloooooow. It walks the boundary line to test
+            // whether it goes inside the current rectangle. I was expecting a
+            // corner case in which the boundary creates an inclusion of zero width,
+            // but seem to have got away with it. 
+            auto has_points_inside = [&]()
+            {
+                auto [x, y] = input[0];
+                for (auto k: aoc::range(size + 1U))
+                {
+                    auto [xk, yk] = input[k % size];
+                    auto xd = aoc::sgn(xk - x);
+                    auto yd = aoc::sgn(yk - y);
+                    while ((x != xk) || (y != yk))
+                    {
+                        x += xd;
+                        y += yd;
+              
+                        if ( (x > min(xi, xj)) && 
+                             (x < max(xi, xj)) && 
+                             (y > min(yi, yj)) && 
+                             (y < max(yi, yj)))
+                            return true;
+                    }
+                }
+                return false;
+            };
+
+            if (has_points_inside()) continue;
+
+            auto area = (abs(xj - xi) + 1) * (abs(yi - yj) + 1);
+            result = max(result, area);
+        }
+    }
 
     return result;
 }
@@ -23,13 +78,7 @@ auto part2(T& input)
 
 void run(const char* filename)
 {
-    //template <class... Args>
-    //std::vector<std::tuple<Args...>> read_lines(std::string filename, std::string pat, const std::string& delim = ";")
-    auto lines = aoc::read_lines<int,int>(filename, R"((\d+)\s+(\d+))");
-
-    // Read all lines from a file into a vector of strings. Trims lines by default and drops empty lines by default. Keeping 
-    // empty lines can be useful when the blank lines in the input are meaningful.
-    //std::vector<std::string> read_lines(std::string filename, Blanks allow_blanks = Blanks::Suppress, Trim trim_lines = Trim::Yes);
+    auto lines = aoc::read_lines<int64_t, int64_t>(filename, R"((\d+),(\d+))");
 
     auto p1 = part1(lines);
     cout << "Part1: " << p1 << '\n';
