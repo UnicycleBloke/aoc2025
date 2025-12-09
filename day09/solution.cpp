@@ -42,25 +42,50 @@ auto part2(T& input)
             // whether it goes inside the current rectangle. I was expecting a
             // corner case in which the boundary creates an inclusion of zero width,
             // but seem to have got away with it. 
+            // auto has_points_inside = [&]()
+            // {
+            //     auto [x, y] = input[0];
+            //     // +1 to complete the boundary loop. Note use of % below.
+            //     for (auto k: aoc::range(size + 1U))
+            //     {
+            //         auto [xk, yk] = input[k % size];
+            //         auto xd = aoc::sgn(xk - x);
+            //         auto yd = aoc::sgn(yk - y);
+            //         while ((x != xk) || (y != yk))
+            //         {
+            //             x += xd;
+            //             y += yd;
+              
+            //             if ( (x > min(xi, xj)) && 
+            //                  (x < max(xi, xj)) && 
+            //                  (y > min(yi, yj)) && 
+            //                  (y < max(yi, yj)))
+            //                 return true;
+            //         }
+            //     }
+            //     return false;
+            // };
+
+            // This function is much faster as it tests only the midpoint of each
+            // line on the boundary. If the midpoint lies inside the rectangle, we're done. 
             auto has_points_inside = [&]()
             {
                 auto [x, y] = input[0];
+                // +1 to complete the boundary loop. Note use of % below.
                 for (auto k: aoc::range(size + 1U))
                 {
                     auto [xk, yk] = input[k % size];
-                    auto xd = aoc::sgn(xk - x);
-                    auto yd = aoc::sgn(yk - y);
-                    while ((x != xk) || (y != yk))
-                    {
-                        x += xd;
-                        y += yd;
-              
-                        if ( (x > min(xi, xj)) && 
-                             (x < max(xi, xj)) && 
-                             (y > min(yi, yj)) && 
-                             (y < max(yi, yj)))
-                            return true;
-                    }
+                    x = (xk + x) / 2;
+                    y = (yk + y) / 2;
+             
+                    if ( (x > min(xi, xj)) && 
+                            (x < max(xi, xj)) && 
+                            (y > min(yi, yj)) && 
+                            (y < max(yi, yj)))
+                        return true;
+
+                    x = xk;
+                    y = yk;
                 }
                 return false;
             };
