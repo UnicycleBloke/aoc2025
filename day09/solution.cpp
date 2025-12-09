@@ -70,11 +70,11 @@ auto part2(T& input)
             // line on the boundary. If the midpoint lies inside the rectangle, we're done. 
             auto has_points_inside = [&]()
             {
-                auto [x, y] = input[0];
+                auto [x, y] = input[i];
                 // +1 to complete the boundary loop. Note use of % below.
                 for (auto k: aoc::range(size + 1U))
                 {
-                    auto [xk, yk] = input[k % size];
+                    auto [xk, yk] = input[(k + i + 1) % size];
                     x = (xk + x) / 2;
                     y = (yk + y) / 2;
              
