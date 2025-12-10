@@ -1,11 +1,65 @@
 #include "utils.h"
 
 
+struct Machine
+{
+    uint64_t         target{};
+    vector<uint64_t> buttons{};
+    vector<uint16_t> joltage;
+
+    void print() const
+    {
+        cout << "[" << bitset<8>{target} << "] ";
+        for (auto button: buttons)
+            cout << "(" << bitset<8>{button} << ") ";
+        cout << "{";    
+        for (auto j: joltage)
+            cout << j << ",";
+        cout << "}\n";
+    }
+};
+
+
+void toggle(uint64_t target, uint64_t state, uint16_t steps, uint64_t prev_button, 
+    const Machine& machine, uint16_t& max_steps, vector<uint64_t> path)
+{
+    if (steps >= max_steps)
+        return;
+
+    if (target == state)
+    {
+        max_steps = std::min(max_steps, steps);
+        cout << steps << " ";
+        for (auto p: path)
+            cout << "(" << bitset<8>{p} << ") ";
+        cout << "\n";
+        return;
+    }
+
+    for (auto button: machine.buttons)
+    {
+        //if (button == prev_button) continue;
+        auto path2 = path;
+        path2.push_back(button);
+        toggle(target, state ^ button, steps + 1, button, machine, max_steps, path2);
+    }
+}
+
+
 template <typename T>
 auto part1(const T& input)
 {
     aoc::timer timer;
     int result = 0;
+
+    for (const auto& machine: input)
+    {
+        machine.print();
+        uint16_t max_steps = 4;
+        vector<uint64_t> path;
+        toggle(machine.target, 0, 0, 0, machine, max_steps, path);
+        cout << max_steps << "\n";
+    }
 
     return result;
 }
@@ -20,21 +74,82 @@ auto part2(T& input)
     return result;
 }
 
+// [.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
+// [...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
+// [.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}
 
 void run(const char* filename)
 {
-    //template <class... Args>
-    //std::vector<std::tuple<Args...>> read_lines(std::string filename, std::string pat, const std::string& delim = ";")
-    auto lines = aoc::read_lines<int,int>(filename, R"((\d+)\s+(\d+))");
+    auto lines = aoc::read_lines(filename, aoc::Blanks::Suppress, aoc::Trim::Yes);
 
-    // Read all lines from a file into a vector of strings. Trims lines by default and drops empty lines by default. Keeping 
-    // empty lines can be useful when the blank lines in the input are meaningful.
-    //std::vector<std::string> read_lines(std::string filename, Blanks allow_blanks = Blanks::Suppress, Trim trim_lines = Trim::Yes);
+    vector<Machine> machines;
+    for (auto line: lines)
+    {
+        Machine machine;
 
-    auto p1 = part1(lines);
+        auto s = aoc::split(line, " ");
+        for (auto t: s)
+        {           
+            if (t[0] == '[')
+            {
+                size_t i = 1;
+                while (t[i] != ']')
+                {
+                    machine.target *= 2;
+                    if (t[i] == '#')
+                        machine.target += 1;
+                    ++i;
+                }
+            }
+
+            if (t[0] == '(')
+            {
+                size_t i = 1;
+                uint64_t button = 0;
+                while (t[i] != ')')
+                {
+                    if (t[i] == ',') ++i;
+
+                    int value = 0;
+                    while (isdigit(t[i]))
+                    {
+                        value *= 10;
+                        value += t[i] - '0';
+                        ++i; 
+                    }  
+                    button |= (1 << value);
+                }
+                machine.buttons.push_back(button);
+            }
+
+            if (t[0] == '{')
+            {
+                size_t i = 1;
+                vector<uint16_t> joltage;
+                while (t[i] != '}')
+                {
+                    if (t[i] == ',') ++i;
+
+                    int value = 0;
+                    while (isdigit(t[i]))
+                    {
+                        value *= 10;
+                        value += t[i] - '0';
+                        ++i; 
+                    }
+                    machine.joltage.push_back(value);
+                }
+            }
+            
+        }
+
+        machines.push_back(machine);
+    }
+
+    auto p1 = part1(machines);
     cout << "Part1: " << p1 << '\n';
 
-    auto p2 = part2(lines);
+    auto p2 = part2(machines);
     cout << "Part2: " << p2 << '\n';
 }
 
