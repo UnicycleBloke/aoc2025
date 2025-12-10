@@ -68,11 +68,56 @@ auto part1(const T& input)
 }
 
 
+void increment(const Machine& machine, vector<uint16_t> state, uint16_t steps, uint16_t& max_steps)
+{
+    // Too deep. 
+    if (steps >= max_steps)
+        return;
+
+    // Have we overcooked one of the counters?
+    size_t matched = 0;    
+    for (auto i: aoc::range(state.size()))
+    {
+        if (state[i] > machine.joltage[i])
+            return;
+
+        if (state[i] == machine.joltage[i])
+            ++matched;
+    }
+
+    // Have we matched all the joltage counters?
+    if (matched == state.size())
+    {
+        max_steps = std::min(max_steps, steps);
+        return;
+    }
+
+    // Increment and dive deeper.
+    for (const auto& buttons: machine.buttons2)
+    {
+        auto state2 = state;
+        for (auto b: buttons)
+            ++state2[b];
+        increment(machine, state2, steps + 1, max_steps);
+    }
+}
+
+
 template <typename T>
 auto part2(T& input)
 {
     aoc::timer timer;
-    int result = 0;
+    uint64_t result = 0;
+
+    for (const auto& machine: input)
+    {
+        machine.print();
+        vector<uint16_t> state(machine.joltage.size(), 0);
+        uint16_t max_steps = 1000;
+        increment( machine, state, 0, max_steps);
+        result += max_steps;
+        cout << max_steps << "\n";
+    }
 
     return result;
 }
@@ -153,8 +198,8 @@ void run(const char* filename)
         machines.push_back(machine);
     }
 
-    auto p1 = part1(machines);
-    cout << "Part1: " << p1 << '\n';
+    // auto p1 = part1(machines);
+    // cout << "Part1: " << p1 << '\n';
 
     auto p2 = part2(machines);
     cout << "Part2: " << p2 << '\n';
