@@ -7,6 +7,8 @@ struct Machine
     vector<uint64_t> buttons{};
     vector<uint16_t> joltage;
 
+    vector<vector<uint16_t>> buttons2;
+
     void print() const
     {
         cout << "[" << bitset<8>{target} << "] ";
@@ -29,10 +31,10 @@ void toggle(uint64_t target, uint64_t state, uint16_t steps, uint64_t prev_butto
     if (target == state)
     {
         max_steps = std::min(max_steps, steps);
-        cout << steps << " ";
-        for (auto p: path)
-            cout << "(" << bitset<8>{p} << ") ";
-        cout << "\n";
+        // cout << steps << " ";
+        // for (auto p: path)
+        //     cout << "(" << bitset<8>{p} << ") ";
+        // cout << "\n";
         return;
     }
 
@@ -50,14 +52,15 @@ template <typename T>
 auto part1(const T& input)
 {
     aoc::timer timer;
-    int result = 0;
+    uint64_t result = 0;
 
     for (const auto& machine: input)
     {
         machine.print();
-        uint16_t max_steps = 4;
+        uint16_t max_steps = machine.buttons.size();
         vector<uint64_t> path;
         toggle(machine.target, 0, 0, 0, machine, max_steps, path);
+        result += max_steps;
         cout << max_steps << "\n";
     }
 
@@ -74,9 +77,6 @@ auto part2(T& input)
     return result;
 }
 
-// [.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
-// [...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
-// [.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}
 
 void run(const char* filename)
 {
@@ -88,6 +88,9 @@ void run(const char* filename)
         Machine machine;
 
         auto s = aoc::split(line, " ");
+
+        size_t lights = s[0].size() - 2U;
+
         for (auto t: s)
         {           
             if (t[0] == '[')
@@ -103,9 +106,11 @@ void run(const char* filename)
             }
 
             if (t[0] == '(')
-            {
+            {               
                 size_t i = 1;
                 uint64_t button = 0;
+                vector<uint16_t> button2;
+
                 while (t[i] != ')')
                 {
                     if (t[i] == ',') ++i;
@@ -117,9 +122,11 @@ void run(const char* filename)
                         value += t[i] - '0';
                         ++i; 
                     }  
-                    button |= (1 << value);
+                    button |= (1 << (lights - value - 1));
+                    button2.push_back(value);
                 }
                 machine.buttons.push_back(button);
+                machine.buttons2.push_back(button2);
             }
 
             if (t[0] == '{')
