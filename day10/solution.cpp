@@ -12,8 +12,14 @@ struct Machine
     void print() const
     {
         cout << "[" << bitset<8>{target} << "] ";
-        for (auto button: buttons)
-            cout << "(" << bitset<8>{button} << ") ";
+        // for (auto button: buttons)
+        //     cout << "(" << bitset<8>{button} << ") ";
+        for (auto button: buttons2)
+        {
+            cout << "(";
+            for (auto b: button) cout << b << " ";
+            cout << ") ";
+        }
         cout << "{";    
         for (auto j: joltage)
             cout << j << ",";
@@ -22,83 +28,81 @@ struct Machine
 };
 
 
-void toggle(uint64_t target, uint64_t state, uint16_t steps, uint64_t prev_button, 
-    const Machine& machine, uint16_t& max_steps, vector<uint64_t> path)
+// void toggle(const Machine& machine, uint64_t state, uint16_t index, uint16_t steps, uint16_t& min_steps)
+// {
+//     if (index >= machine.buttons.size()) return;
+
+//     if (steps >= min_steps) return;
+
+//     if (machine.target == state)
+//     {
+//         min_steps = std::min(min_steps, steps);
+//         return;
+//     }
+
+//     toggle(machine, state,                          index + 1, steps,     min_steps);
+//     toggle(machine, state ^ machine.buttons[index], index + 1, steps + 1, min_steps);
+// }
+
+
+// template <typename T>
+// auto part1(const T& input)
+// {
+//     aoc::timer timer;
+//     uint64_t result = 0;
+
+//     for (const auto& machine: input)
+//     {
+//         machine.print();
+//         uint16_t min_steps = machine.buttons.size();
+//         toggle(machine, 0, 0, 0, min_steps);
+//         result += min_steps;
+//         cout << min_steps << "\n";
+//     }
+
+//     return result;
+// }
+
+
+// [.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
+// [...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
+// [.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}
+
+void increment(const Machine& machine, vector<uint16_t> state, uint16_t index, uint16_t steps, uint16_t& min_steps, vector<uint16_t> path)
 {
-    if (steps >= max_steps)
+    if (index >= machine.buttons2.size()) 
         return;
 
-    if (target == state)
-    {
-        max_steps = std::min(max_steps, steps);
-        // cout << steps << " ";
-        // for (auto p: path)
-        //     cout << "(" << bitset<8>{p} << ") ";
-        // cout << "\n";
-        return;
-    }
-
-    for (auto button: machine.buttons)
-    {
-        //if (button == prev_button) continue;
-        auto path2 = path;
-        path2.push_back(button);
-        toggle(target, state ^ button, steps + 1, button, machine, max_steps, path2);
-    }
-}
-
-
-template <typename T>
-auto part1(const T& input)
-{
-    aoc::timer timer;
-    uint64_t result = 0;
-
-    for (const auto& machine: input)
-    {
-        machine.print();
-        uint16_t max_steps = machine.buttons.size();
-        vector<uint64_t> path;
-        toggle(machine.target, 0, 0, 0, machine, max_steps, path);
-        result += max_steps;
-        cout << max_steps << "\n";
-    }
-
-    return result;
-}
-
-
-void increment(const Machine& machine, vector<uint16_t> state, uint16_t steps, uint16_t& max_steps)
-{
-    // Too deep. 
-    if (steps >= max_steps)
+    if (steps >= min_steps)
         return;
 
-    // Have we overcooked one of the counters?
-    size_t matched = 0;    
-    for (auto i: aoc::range(state.size()))
+    while (true)
     {
-        if (state[i] > machine.joltage[i])
+        const auto& lights = machine.buttons2[index];
+        for (auto i: lights)
+        {
+            ++state[i];
+            if (state[i] > machine.joltage[i])
+                return;                 
+        }
+        
+        path.push_back(index);    
+
+        if (state == machine.joltage)
+        {
+            min_steps = std::min(min_steps, steps);
+
+            for (auto j: path) cout << j << " ";
+            cout << "\n";
+
             return;
+        }
+        else 
+        {
+            increment(machine, state, index + 1, steps + 1, min_steps, path);
+        }
 
-        if (state[i] == machine.joltage[i])
-            ++matched;
-    }
-
-    // Have we matched all the joltage counters?
-    if (matched == state.size())
-    {
-        max_steps = std::min(max_steps, steps);
-        return;
-    }
-
-    // Increment and dive deeper.
-    for (const auto& buttons: machine.buttons2)
-    {
-        auto state2 = state;
-        for (auto b: buttons)
-            ++state2[b];
-        increment(machine, state2, steps + 1, max_steps);
+        ++steps; 
     }
 }
 
@@ -111,12 +115,18 @@ auto part2(T& input)
 
     for (const auto& machine: input)
     {
-        machine.print();
-        vector<uint16_t> state(machine.joltage.size(), 0);
-        uint16_t max_steps = 1000;
-        increment( machine, state, 0, max_steps);
-        result += max_steps;
-        cout << max_steps << "\n";
+        //machine.print();
+
+        cout << machine.buttons2.size() << " " << machine.joltage.size() << "\n";
+
+        // vector<uint16_t> state(machine.joltage.size(), 0);
+
+        // uint16_t min_steps = 1000;
+        // vector<uint16_t> path;
+        // increment(machine, state, 0, 0, min_steps, path);
+
+        // result += min_steps;
+        // cout << min_steps << "\n";
     }
 
     return result;

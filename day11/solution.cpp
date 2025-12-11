@@ -1,11 +1,63 @@
 #include "utils.h"
 
 
+// Original Part1 code 
+// int count_paths(map<string, vector<string>>& devices, const string& src, const string& out)
+// {
+//     if (src == out) 
+//         return 1;
+
+//     int count = 0;
+//     for (const auto& dst: devices[src])
+//     {
+//         count += count_paths(devices, dst, out);
+//     }
+
+//     return count;
+// }
+
+
+// More general solution using a cache.
+uint64_t count_paths(map<string, vector<string>>& devices, 
+    map<string, uint64_t>& counts, map<string, bool>& visited,
+    const string& src, const string& end)
+{
+    if (src == end) 
+        return 1;
+
+    if (visited[src])
+        return counts[src];
+
+    uint64_t count = 0;
+    for (const auto& dst: devices[src])
+        count += count_paths(devices, counts, visited, dst, end);
+    counts[src]  = count;
+    visited[src] = true;
+
+    return count;
+}
+
+
+uint64_t count_paths(map<string, vector<string>>& devices, const string& src, const string& dst)
+{
+    // A little dynamic programming to accumulate the numbers of paths.
+    map<string, bool>     visited;
+    map<string, uint64_t> counts;
+
+    counts[dst] = 1;       
+    auto result = count_paths(devices, counts, visited, src, dst);
+    //cout << src << " -> " << end << " = " << result << "\n";
+    return result;
+}
+
+
 template <typename T>
-auto part1(const T& input)
+auto part1(T& input)
 {
     aoc::timer timer;
     int result = 0;
+
+    result = count_paths(input, "you", "out");
 
     return result;
 }
@@ -15,26 +67,63 @@ template <typename T>
 auto part2(T& input)
 {
     aoc::timer timer;
-    int result = 0;
+    uint64_t result = 0;
+
+    // All paths either go from dac to fft, or vice versa. We can't have both.
+    // Determine the direction and then find paths piece-wise.
+    result = count_paths(input, "dac", "fft");
+    if (result == 0)
+    {
+        result  = count_paths(input, "svr", "fft");
+        result *= count_paths(input, "fft", "dac");
+        result *= count_paths(input, "dac", "out");
+    }
+    else
+    {
+        result  = count_paths(input, "svr", "dac");
+        result *= count_paths(input, "dac", "fft");
+        result *= count_paths(input, "fft", "out");
+    }
 
     return result;
 }
 
 
+struct Device
+{
+    string         src;
+    vector<string> dst;
+};
+
+
 void run(const char* filename)
 {
-    //template <class... Args>
-    //std::vector<std::tuple<Args...>> read_lines(std::string filename, std::string pat, const std::string& delim = ";")
-    auto lines = aoc::read_lines<int,int>(filename, R"((\d+)\s+(\d+))");
+    auto lines = aoc::read_lines(filename, aoc::Blanks::Suppress, aoc::Trim::Yes);
 
-    // Read all lines from a file into a vector of strings. Trims lines by default and drops empty lines by default. Keeping 
-    // empty lines can be useful when the blank lines in the input are meaningful.
-    //std::vector<std::string> read_lines(std::string filename, Blanks allow_blanks = Blanks::Suppress, Trim trim_lines = Trim::Yes);
+    //vector<Device> devices;
 
-    auto p1 = part1(lines);
+    map<string, vector<string>> devices;
+    for (auto line: lines)
+    {
+        //Device d;
+
+        auto s = aoc::split(line, ":");
+        devices[s[0]] = aoc::split(s[1], " ");
+
+        // d.src = s[0];
+        // d.dst = aoc::split(s[1], " ");
+        // devices.push_back(d);
+
+        // cout << d.src << ": ";
+        // for (const auto& t: d.dst)
+        //     cout << t << " ";
+        // cout << "\n";
+    }
+
+    auto p1 = part1(devices);
     cout << "Part1: " << p1 << '\n';
 
-    auto p2 = part2(lines);
+    auto p2 = part2(devices);
     cout << "Part2: " << p2 << '\n';
 }
 
